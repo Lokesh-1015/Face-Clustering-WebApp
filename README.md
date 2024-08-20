@@ -33,7 +33,7 @@ Welcome to the Face-Clustering Web App! This application uses the Face Recogniti
 
 1. Clone the repository:
     ```bash
-    git clone https://github.com/your-username/your-repository.git
+    git clone https://github.com/Lokesh-1015/Face-Clustering-WebApp.git
     ```
 
 2. Navigate to the project directory:
