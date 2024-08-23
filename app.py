@@ -1,29 +1,35 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify
+from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify, session
 from io import BytesIO
 import datetime
-from config import init_mongo
 import bson
 from bson import ObjectId
+from config import init_mongo
+import uuid
 
 app = Flask(__name__)
 
 # Configuration
-app.config['MONGO_URI'] = 'mongodb://localhost:27017/face_clustering'
+app.config['MONGO_URI'] = 'mongodb+srv://Lokesh:lokesh.1015@faceclustering.0vmes.mongodb.net/FaceClustering?retryWrites=true&w=majority'
 mongo = init_mongo(app)  # Initialize mongo here
 
+app.secret_key = 'lokesh.1015'
+
+# Utility functions
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}
 
 def create_zip_from_database(cluster_label):
     """Create a zip file for a given cluster from the database."""
+    session_id = session['session_id']
     clusters_collection = mongo.db.clusters
-    cluster = clusters_collection.find_one({'cluster_label': cluster_label})
+    cluster = clusters_collection.find_one({'cluster_label': cluster_label, 'session_id': session_id})
     
     if cluster:
         zip_data = cluster['zip_data']
         return BytesIO(zip_data)
     return None
 
+# Routes
 @app.route('/')
 def root():
     return redirect(url_for('index'))
@@ -34,6 +40,9 @@ def index():
 
 @app.route('/home', methods=['GET', 'POST'])
 def home():
+    if 'session_id' not in session:
+        session['session_id'] = str(uuid.uuid4())  # Create a new session_id if not present
+    
     if request.method == 'POST':
         if 'upload' in request.form:
             if 'files[]' not in request.files:
@@ -48,7 +57,8 @@ def home():
                         'filename': filename,
                         'content_type': content_type,
                         'upload_date': datetime.datetime.utcnow(),
-                        'image_data': image_data
+                        'image_data': image_data,
+                        'session_id': session['session_id']  # Associate the image with the session
                     })
             return redirect(url_for('home'))
         elif 'proceed' in request.form:
@@ -57,18 +67,30 @@ def home():
 
 @app.route('/process_and_redirect', methods=['POST'])
 def process_and_redirect():
+    if 'session_id' not in session:
+        return "Session ID not found", 400
+
     uploads_collection = mongo.db.uploads
-    images = list(uploads_collection.find())
+    images = list(uploads_collection.find({'session_id': session['session_id']}))
+
     image_ids = [str(image['_id']) for image in images]  # Convert ObjectId to string for processing
-    
+
+    print(f"[INFO] Image IDs: {image_ids}")
+
     from pipeline.main import run_clustering_pipeline
-    run_clustering_pipeline(image_ids)
+    run_clustering_pipeline(image_ids)  # Pass session_id to the clustering pipeline
     return jsonify({'redirect': url_for('results')})
 
 @app.route('/results')
 def results():
+    if 'session_id' not in session:
+        return "Session ID not found", 400
+
+    session_id = session['session_id']
     clusters_collection = mongo.db.clusters
-    cluster_data = list(clusters_collection.find({}))
+    
+    # Fetch clusters only for the current session
+    cluster_data = list(clusters_collection.find({'session_id': session_id}))
 
     face_data = []
     for cluster in cluster_data:
@@ -117,7 +139,8 @@ def download(cluster_label):
 @app.route('/get_images/<cluster_label>')
 def get_images(cluster_label):
     clusters_collection = mongo.db.clusters
-    cluster = clusters_collection.find_one({'cluster_label': cluster_label})
+    session_id = session['session_id']
+    cluster = clusters_collection.find_one({'cluster_label': cluster_label, 'session_id': session_id})
     
     if cluster:
         image_ids = cluster.get('images', [])
@@ -128,8 +151,10 @@ def get_images(cluster_label):
 
 @app.route('/clear_database', methods=['POST'])
 def clear_database():
-    mongo.db.uploads.delete_many({})
-    mongo.db.clusters.delete_many({})
+    session_id = session.pop('session_id', None)
+    if session_id:
+        mongo.db.uploads.delete_many({'session_id': session_id})
+        mongo.db.clusters.delete_many({'session_id': session_id})
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
