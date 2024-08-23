@@ -6,8 +6,8 @@ from bson.binary import Binary
 from bson import ObjectId
 
 # MongoDB connection
-client = MongoClient("mongodb://localhost:27017/")
-db = client["face_clustering"]
+client = MongoClient("mongodb+srv://Lokesh:lokesh.1015@faceclustering.0vmes.mongodb.net/FaceClustering?retryWrites=true&w=majority")
+db = client["FaceClustering"]
 collection = db["uploads"]
 
 def load_and_encode_images(image_ids, detection_method="hog", min_face_size=20):
@@ -47,7 +47,7 @@ def load_and_encode_images(image_ids, detection_method="hog", min_face_size=20):
         for (top, right, bottom, left) in boxes:
             face_width = right - left
             face_height = bottom - top
-            
+
             # Print face dimensions for debugging
             print(f"[DEBUG] Face dimensions (width x height): {face_width} x {face_height}")
 
@@ -57,7 +57,7 @@ def load_and_encode_images(image_ids, detection_method="hog", min_face_size=20):
         # Encode the valid faces
         encodings = face_recognition.face_encodings(rgb, valid_boxes)
 
-        d = [{"imageId": image_id, "loc": box, "encoding": enc}
+        d = [{"imageId": image_id, "loc": box, "encoding": enc, "session_id": image_doc.get('session_id')}
              for (box, enc) in zip(valid_boxes, encodings)]
         data.extend(d)
 
