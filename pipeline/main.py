@@ -14,23 +14,23 @@ def run_clustering_pipeline(image_ids):
     detection_method = "hog"
     min_face_size = 20
 
-    print("[INFO] Loading and encoding images...")
+    # print("[INFO] Loading and encoding images...")
     data = pipeline.data_preperation.load_and_encode_images(image_ids, detection_method, min_face_size)
 
     encodings = [d["encoding"] for d in data]
-    print(f"[DEBUG] Encodings length: {len(encodings)}")  # Debugging line
+    # print(f"[DEBUG] Encodings length: {len(encodings)}")  # Debugging line
 
     if len(encodings) == 0:
         print("[ERROR] No encodings found. Exiting pipeline.")
         return  # Exit if no encodings are found
 
-    print("[INFO] Calculating explained variance...")
+    # print("[INFO] Calculating explained variance...")
     n_components_values, explained_variances = pipeline.pca_analysis.calculate_explained_variance(encodings)
 
     optimal_components = pipeline.pca_analysis.determine_optimal_components(explained_variances, threshold=0.86)
-    print(f"[INFO] Optimal number of components for PCA: {optimal_components}")
+    # print(f"[INFO] Optimal number of components for PCA: {optimal_components}")
 
-    print("[INFO] Applying PCA reduction...")
+    # print("[INFO] Applying PCA reduction...")
     reduced_data = pipeline.pca_analysis.apply_pca(encodings, n_components=optimal_components)
 
     labels, labelIDs = pipeline.face_clustering.cluster_faces(reduced_data)
@@ -38,7 +38,7 @@ def run_clustering_pipeline(image_ids):
     clusters_collection = mongo.db.clusters
 
     for label in labelIDs:
-        print(f"[INFO] Saving cluster for label: {label}")
+        # print(f"[INFO] Saving cluster for label: {label}")
         cluster_images = []
         zip_buffer = io.BytesIO()
 
@@ -66,4 +66,4 @@ def run_clustering_pipeline(image_ids):
             'session_id': label_encodings[0].get('session_id', None)  # Default to None if session_id is missing
         })
 
-    print("[INFO] Clustering pipeline complete.")
+    # print("[INFO] Clustering pipeline complete.")

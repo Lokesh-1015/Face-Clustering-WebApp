@@ -14,7 +14,7 @@ def load_and_encode_images(image_ids, detection_method="hog", min_face_size=20):
     data = []
 
     for (i, image_id) in enumerate(image_ids):
-        print(f"[INFO] Processing image {i + 1}/{len(image_ids)}")
+        # print(f"[INFO] Processing image {i + 1}/{len(image_ids)}")
         # Fetch image from MongoDB
         image_doc = collection.find_one({'_id': ObjectId(image_id)})
         
@@ -49,7 +49,7 @@ def load_and_encode_images(image_ids, detection_method="hog", min_face_size=20):
             face_height = bottom - top
 
             # Print face dimensions for debugging
-            print(f"[DEBUG] Face dimensions (width x height): {face_width} x {face_height}")
+            # print(f"[DEBUG] Face dimensions (width x height): {face_width} x {face_height}")
 
             if face_width >= min_face_size and face_height >= min_face_size:
                 valid_boxes.append((top, right, bottom, left))

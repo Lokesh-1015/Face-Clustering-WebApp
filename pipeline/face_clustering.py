@@ -7,6 +7,6 @@ def cluster_faces(encodings, eps=0.33, min_samples=1):
     
     labelIDs = np.unique(clt.labels_)
     numUniqueFaces = len(np.where(labelIDs > -1)[0])
-    print("[INFO] Number of unique faces: {}".format(numUniqueFaces))
+    # print("[INFO] Number of unique faces: {}".format(numUniqueFaces))
     
     return clt.labels_, labelIDs
