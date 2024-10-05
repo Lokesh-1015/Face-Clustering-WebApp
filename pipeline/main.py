@@ -1,7 +1,7 @@
 import pipeline.data_preperation
 import pipeline.face_clustering
 import pipeline.pca_analysis
-import pipeline.plotting
+# import pipeline.plotting
 from flask_pymongo import PyMongo
 from io import BytesIO
 import zipfile
