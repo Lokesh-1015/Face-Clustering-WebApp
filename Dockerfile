@@ -14,7 +14,8 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     libatlas-base-dev \
     libboost-thread-dev \
-    libboost-system-dev
+    libboost-system-dev \
+    && apt-get clean
 
 # Copy the requirements.txt file into the container
 COPY requirements.txt /app/requirements.txt
@@ -23,11 +24,14 @@ COPY requirements.txt /app/requirements.txt
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-# Copy the rest of the application code
+# Copy the rest of the application code into the container
 COPY . /app
 
-# Expose the port Flask runs on
+# Expose the port that Railway uses dynamically
 EXPOSE 5000
 
-# Set the default command to run the app
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
+# Set the environment variable for Railway's dynamic port
+ENV PORT 5000
+
+# Set the default command to run the app using the dynamically assigned port
+CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "app:app"]
