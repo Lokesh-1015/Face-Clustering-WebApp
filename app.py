@@ -156,3 +156,6 @@ def clear_database():
         mongo.db.uploads.delete_many({'session_id': session_id})
         mongo.db.clusters.delete_many({'session_id': session_id})
     return redirect(url_for('index'))
+
+# if __name__ == '__main__':
+#     app.run(debug=True)
